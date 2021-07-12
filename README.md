@@ -1,0 +1,1 @@
+# opencv-chess-bot
