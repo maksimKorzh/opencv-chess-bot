@@ -10,11 +10,12 @@
 #####################################
 
 # packages
+import sys
 import cv2
 import numpy as np
 import pyautogui as pg
 import chess
-import sys
+import chess.engine
 
 # constants (modify if needed)
 BOARD_SIZE = 400
@@ -177,6 +178,25 @@ def locations_to_fen(piece_locations):
     # return FEN string
     return fen
             
+# search position for a best move
+def search(fen):
+    # create chess board instance and set position from FEN string
+    board = chess.Board(fen=fen)
+    print('Searching best move for this position:')
+    print(board)
+
+    # load engine
+    engine = chess.engine.SimpleEngine.popen_uci("./Stockfish/stockfish")
+    
+    # get best move
+    best_move = str(engine.play(board, chess.engine.Limit(time=0.1)).move)
+    
+    # close engine
+    engine.quit()
+
+    # search for the best move
+    return best_move
+
 
 ################################    
 #
@@ -184,9 +204,14 @@ def locations_to_fen(piece_locations):
 #
 ################################
 
+# locate pieces
 screenshot, piece_locations = recognize_position()
+
+# convert piece image coordinates to FEN string
 fen = locations_to_fen(piece_locations)
-print('FEN:', fen)
+
+best_move = search(fen)
+print('Best move:', best_move)
 
 
 
