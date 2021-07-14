@@ -16,6 +16,7 @@ import numpy as np
 import pyautogui as pg
 import chess
 import chess.engine
+import time
 
 # constants (modify if needed)
 BOARD_SIZE = 400
@@ -31,7 +32,7 @@ WHITE = 0
 BLACK = 1
 
 # side to move
-side_to_move = None
+side_to_move = 0
 
 # read argv if available
 try:
@@ -40,6 +41,21 @@ except:
     print('usage: "chessbot.py white" or "chessbot.py black"')
     sys.exit(0)
 
+# square to coords
+square_to_coords = [];
+
+# array to convert board square indices to coordinates (black)
+get_square = [
+    'a8', 'b8', 'c8', 'd8', 'e8', 'f8', 'g8', 'h8',
+    'a7', 'b7', 'c7', 'd7', 'e7', 'f7', 'g7', 'h7',
+    'a6', 'b6', 'c6', 'd6', 'e6', 'f6', 'g6', 'h6',
+    'a5', 'b5', 'c5', 'd5', 'e5', 'f5', 'g5', 'h5',
+    'a4', 'b4', 'c4', 'd4', 'e4', 'f4', 'g4', 'h4',
+    'a3', 'b3', 'c3', 'd3', 'e3', 'f3', 'g3', 'h3',
+    'a2', 'b2', 'c2', 'd2', 'e2', 'f2', 'g2', 'h2',
+    'a1', 'b1', 'c1', 'd1', 'e1', 'f1', 'g1', 'h1'
+];
+  
 # map piece names to FEN chars
 piece_names = {
     'black_king': 'k',
@@ -172,8 +188,8 @@ def locations_to_fen(piece_locations):
     # add side to move to fen
     fen += ' ' + 'b' if side_to_move else ' w'
     
-    # add placeholders (NO EN PASSANT AND CASTLING for now)
-    fen += ' - - 0 0'
+    # add placeholders (NO EN PASSANT AND CASTLING are static placeholders)
+    fen += ' KQkq - 0 1'
     
     # return FEN string
     return fen
@@ -181,12 +197,16 @@ def locations_to_fen(piece_locations):
 # search position for a best move
 def search(fen):
     # create chess board instance and set position from FEN string
-    board = chess.Board(fen=fen)
     print('Searching best move for this position:')
+    print(fen)
+    board = chess.Board(fen=fen)
     print(board)
 
-    # load engine
+    # load Stockfish engine
     engine = chess.engine.SimpleEngine.popen_uci("./Stockfish/stockfish")
+    
+    # load BBC engine
+    #engine = chess.engine.SimpleEngine.popen_uci("./bbc/bbc")
     
     # get best move
     best_move = str(engine.play(board, chess.engine.Limit(time=0.1)).move)
@@ -200,19 +220,62 @@ def search(fen):
 
 ################################    
 #
+#        Init coordinates
+#
+################################
+
+# board top left corner coords
+x = BOARD_LEFT_COORD
+y = BOARD_TOP_COORD
+
+# loop over board rows
+for row in range(8):
+    # loop over board columns
+    for col in range(8):
+        # init square
+        square = row * 8 + col
+        
+        # associate square with square center coordinates
+        square_to_coords.append((int(x + CELL_SIZE / 2), int(y + CELL_SIZE / 2)))
+
+        # increment x coord by cell size
+        x += CELL_SIZE
+    
+    # restore x coord, increment y coordinate by cell size
+    x = BOARD_LEFT_COORD
+    y += CELL_SIZE
+
+################################    
+#
 #          Main driver
 #
 ################################
 
-# locate pieces
-screenshot, piece_locations = recognize_position()
+while True:
+    try:
+        # locate pieces
+        screenshot, piece_locations = recognize_position()
 
-# convert piece image coordinates to FEN string
-fen = locations_to_fen(piece_locations)
+        # convert piece image coordinates to FEN string
+        fen = locations_to_fen(piece_locations)
 
-best_move = search(fen)
-print('Best move:', best_move)
+        best_move = search(fen)
+        print('Best move:', best_move)
 
+        # extract source and destination square coordinates
+        from_sq = square_to_coords[get_square.index(best_move[0] + best_move[1])]
+        to_sq = square_to_coords[get_square.index(best_move[2] + best_move[3])]
+
+        # make move on board
+        pg.moveTo(from_sq)
+        pg.click()
+        pg.moveTo(to_sq)
+        pg.click()
+        
+        # wait for 3 seconds
+        time.sleep(3)
+    
+    except: sys.exit(0)
 
 
 
