@@ -18,7 +18,7 @@ and automated move making on the screen using Python, OpenCV and PyAutoGUI
 # Disclaimer
 Because of a cheating being a big issue nowadays<br> 
 I didn't put any effort to adapt this project to be<br> 
-easily used out of the box by end users, e.g. by chess cheaters.<br>
+easily used out of the box by end users, e.g. chess cheaters.<br>
 This project is intended for programmers with a tinkering purposes in mind.<br>
 Before asking any questions or opening issues make sure to follow<br>
 the tutorials below - they are short and full of the timestamps<br>
